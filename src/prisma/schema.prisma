@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id         Int      @id @default(autoincrement())
+  email      String   @unique
+  password   String
+  created_at DateTime @default(now())
+  profile    Profile?
+  role       String   @default("USER")
+  block      Boolean  @default(false)
+}
+
+model Profile {
+  id               Int              @id @default(autoincrement())
+  user_id          Int              @unique
+  user             User             @relation(fields: [user_id], references: [id])
+  name             String
+  description      String
+  phone            String
+  address          String
+  birthday         DateTime
+  gender           Boolean
+  posts            Post[]
+  pets             Pet[]
+  post_likes       PostLike[]
+  post_comments    PostComment[]
+  articles         Article[]
+  article_likes    ArticleLike[]
+  article_comments ArticleComment[]
+  conversations    Conversation[]
+  messages         Message[]
+  notifications    Notification[]
+  avatar           String?
+  cover            String?
+  follows          Follow[]
+  follow_pets      FollowPet[]
+  created_at       DateTime         @default(now())
+  block            Boolean          @default(false)
+  reports          Report[]
+}
+
+model Follow {
+  id         Int     @id @default(autoincrement())
+  profile_id Int
+  profile    Profile @relation(fields: [profile_id], references: [id])
+  follow_id  Int
+}
+
+model FollowPet {
+  id         Int     @id @default(autoincrement())
+  profile_id Int
+  profile    Profile @relation(fields: [profile_id], references: [id])
+  follow_id  Int
+}
+
+model Post {
+  id            Int           @id @default(autoincrement())
+  title         String
+  content       String        
+  profile_id    Int
+  profile       Profile       @relation(fields: [profile_id], references: [id])
+  created_at    DateTime      @default(now())
+  pets          Pet[]         @relation("PostToPet")
+  post_likes    PostLike[]
+  post_comments PostComment[]
+  hashtags      Hashtag[]
+  files         FilePost[]
+  block         Boolean       @default(false)
+}
+
+model FilePost {
+  id      Int    @id @default(autoincrement())
+  link    String
+  post_id Int
+  post    Post   @relation(fields: [post_id], references: [id], onDelete: Cascade)
+}
+
+model Hashtag {
+  tag        String   @id @unique
+  posts      Post[]
+  created_at DateTime @default(now())
+  block      Boolean  @default(false)
+}
+
+model PostLike {
+  id         Int     @id @default(autoincrement())
+  profile_id Int
+  profile    Profile @relation(fields: [profile_id], references: [id])
+  post_id    Int
+  post       Post    @relation(fields: [post_id], references: [id], onDelete: Cascade)
+}
+
+model PostComment {
+  id         Int      @id @default(autoincrement())
+  profile_id Int
+  profile    Profile  @relation(fields: [profile_id], references: [id])
+  post_id    Int
+  post       Post     @relation(fields: [post_id], references: [id], onDelete: Cascade)
+  content    String   
+  created_at DateTime @default(now())
+}
+
+model File {
+  id            String        @id
+  name          String
+  type          String
+  size          Int
+  created_at    DateTime      @default(now())
+  files_connect FileConnect[]
+}
+
+model FileConnect {
+  id             Int    @id @default(autoincrement())
+  type           String // table
+  connect_id     Int // id table
+  connect_unique String @unique // type + connect_id
+  file_id        String
+  file           File   @relation(fields: [file_id], references: [id])
+}
+
+model Pet {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String
+  birthday    DateTime
+  gender      Boolean
+  profile_id  Int
+  profile     Profile  @relation(fields: [profile_id], references: [id])
+  created_at  DateTime @default(now())
+  posts       Post[]   @relation("PostToPet")
+  avatar      String?
+  cover       String?
+  specie_type String
+  specie      Specie   @relation(fields: [specie_type], references: [type])
+  block       Boolean  @default(false)
+}
+
+model Specie {
+  type       String   @id @unique
+  pets       Pet[]
+  created_at DateTime @default(now())
+  block      Boolean  @default(false)
+}
+
+model Conversation {
+  id         Int       @id @default(autoincrement())
+  id_unique  Int       @unique // Hash code from ProfileIdA and ProfileIdB
+  messages   Message[]
+  profile    Profile[]
+  created_at DateTime  @default(now())
+}
+
+model Message {
+  id              Int          @id @default(autoincrement())
+  content         String      
+  conversation_id Int
+  conversation    Conversation @relation(fields: [conversation_id], references: [id])
+  profile_id      Int
+  profile         Profile      @relation(fields: [profile_id], references: [id])
+  created_at      DateTime     @default(now())
+}
+
+model Article {
+  id               Int              @id @default(autoincrement())
+  title            String
+  content          String          
+  description      String          
+  profile_id       Int
+  profile          Profile          @relation(fields: [profile_id], references: [id])
+  created_at       DateTime         @default(now())
+  article_likes    ArticleLike[]
+  article_comments ArticleComment[]
+  cover            String           @default("")
+  view             Int              @default(0)
+  block            Boolean          @default(false)
+}
+
+model ArticleLike {
+  id         Int     @id @default(autoincrement())
+  profile_id Int
+  profile    Profile @relation(fields: [profile_id], references: [id])
+  article_id Int
+  article    Article @relation(fields: [article_id], references: [id], onDelete: Cascade)
+}
+
+model ArticleComment {
+  id         Int      @id @default(autoincrement())
+  profile_id Int
+  profile    Profile  @relation(fields: [profile_id], references: [id])
+  article_id Int
+  article    Article  @relation(fields: [article_id], references: [id], onDelete: Cascade)
+  content    String   
+  created_at DateTime @default(now())
+}
+
+model NotiSystem {
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String   
+  link       String   
+  price      String  
+  cover      String   @default("")
+  created_at DateTime @default(now())
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  action     String
+  content    String
+  from_id    Int?
+  profile_id Int
+  to_id      Int?
+  profile    Profile  @relation(fields: [profile_id], references: [id])
+  created_at DateTime @default(now())
+}
+
+model Report {
+  id         Int      @id @default(autoincrement())
+  action     String
+  content    String
+  profile_id Int
+  target_id  Int
+  profile    Profile  @relation(fields: [profile_id], references: [id])
+  created_at DateTime @default(now())
+}
